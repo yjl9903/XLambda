@@ -1,9 +1,12 @@
 {
   "name": "lambda-repl",
   "version": "1.0.0",
-  "main": "dist/index.js",
-  "author": "XLor",
   "license": "MIT",
+  "author": "XLor",
+  "main": "dist/index.js",
+  "bin": {
+    "xlambda": "dist/index.js"
+  },
   "scripts": {
     "build": "tsc",
     "lint": "yarn prettier --parser typescript --write src/**/*.ts test/**/*.ts",
@@ -12,10 +15,12 @@
   },
   "dependencies": {
     "@yjl9903/xparse": "^1.1.1",
+    "lodash": "^4.17.15",
     "xlex": "^1.4.3"
   },
   "devDependencies": {
     "@types/jest": "^25.2.1",
+    "@types/lodash": "^4.14.150",
     "@types/node": "^13.13.4",
     "jest": "^25.5.4",
     "prettier": "^2.0.5",

@@ -14,33 +14,28 @@ export enum Token {
   Arrow = 'Arrow',
   LRound = 'LRound',
   RRound = 'RRound',
-  Assign = 'Assign',
 }
 
 export enum Type {
-  Line = 'Line',
   Expr = 'Expr',
   AbstractionList = 'AbstractionList',
   Application = 'Application',
+  Term = 'Term',
 }
 
 export const lexer = new Lexer({
   tokens: [
-    {
-      type: Token.Assign,
-      rule: '=',
-    },
     {
       type: Token.Lambda,
       rule: '\\\\|λ',
     },
     {
       type: Token.Identifier,
-      rule: '[0-9a-zA-Z\\-\\+\\*/=_~!@#$%^&]+',
+      rule: '[0-9a-zA-Z\\+\\*/=_~!@#$%^&]+',
     },
     {
       type: Token.Arrow,
-      rule: '->',
+      rule: '->|.',
     },
     {
       type: Token.LRound,
@@ -56,38 +51,15 @@ export const lexer = new Lexer({
 export const parser = new LRParser({
   tokens: (Reflect.ownKeys(Token) as string[]).map((t) => Token[t]),
   types: (Reflect.ownKeys(Type) as string[]).map((t) => Type[t]),
-  start: Type.Line,
+  start: Type.Expr,
   productions: [
-    {
-      left: Type.Line,
-      right: [
-        {
-          rule: [Token.Identifier, Token.Assign, Type.Expr],
-          reduce(id, assign, expr: BaseASTNode) {
-            return expr;
-          },
-        },
-        {
-          rule: [Type.Expr],
-          reduce(expr: BaseASTNode) {
-            return expr;
-          },
-        },
-      ],
-    },
     {
       left: Type.Expr,
       right: [
         {
-          rule: [Token.Identifier],
-          reduce(id: IToken) {
-            return new VariableASTNode(id.value);
-          },
-        },
-        {
-          rule: [Token.LRound, Type.Expr, Token.RRound],
-          reduce(L, expr) {
-            return expr;
+          rule: [Type.Term],
+          reduce(term: BaseASTNode) {
+            return term;
           },
         },
         {
@@ -142,15 +114,32 @@ export const parser = new LRParser({
       left: Type.Application,
       right: [
         {
-          rule: [Token.Identifier, Type.Expr],
-          reduce(id: IToken, expr: BaseASTNode) {
-            return new ApplicationASTNode(new VariableASTNode(id.value), expr);
+          rule: [Type.Application, Type.Term],
+          reduce(term1: BaseASTNode, term2: BaseASTNode) {
+            return new ApplicationASTNode(term1, term2);
           },
         },
         {
-          rule: [Token.LRound, Type.Expr, Token.RRound, Type.Expr],
-          reduce(L, fn: BaseASTNode, R, expr: BaseASTNode) {
-            return new ApplicationASTNode(fn, expr);
+          rule: [Type.Term, Type.Term],
+          reduce(term1: BaseASTNode, term2: BaseASTNode) {
+            return new ApplicationASTNode(term1, term2);
+          },
+        },
+      ],
+    },
+    {
+      left: Type.Term,
+      right: [
+        {
+          rule: [Token.Identifier],
+          reduce(id: IToken) {
+            return new VariableASTNode(id.value);
+          },
+        },
+        {
+          rule: [Token.LRound, Type.Expr, Token.RRound],
+          reduce(L, expr: BaseASTNode) {
+            return expr;
           },
         },
       ],
@@ -159,11 +148,33 @@ export const parser = new LRParser({
 });
 
 export function parse(text: string) {
-  const tokens = lexer.run(text);
-  const result = parser.parse(tokens);
-  if (result.ok) {
-    return JSON.stringify(result.value, null, 2);
-  } else {
-    throw new Error(result.token);
+  try {
+    const tokens = lexer.run(text);
+    try {
+      const result = parser.parse(tokens);
+      if (result.ok) {
+        return result.value as BaseASTNode;
+      } else {
+        throw new Error(JSON.stringify(result.token, null, 2));
+      }
+    } catch (error) {
+      if (error instanceof SemanticError) {
+        throw new Error('[Semantic Error]:\n' + error.message);
+      } else {
+        throw new Error('[Parse Error]:\n' + error.message);
+      }
+    }
+  } catch (error) {
+    if (error.message.startsWith('[')) {
+      throw error;
+    } else {
+      throw new Error('[Lex Error]:\n' + error.message);
+    }
+  }
+}
+
+class SemanticError extends Error {
+  constructor(message: string) {
+    super(message);
   }
 }
