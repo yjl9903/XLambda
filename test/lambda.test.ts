@@ -46,4 +46,7 @@ test('Church Numerals', () => {
 
   expect(() => bindNodes.set('add', parse('λ x y . λ s z . x s (y s z)'))).not.toThrow();
   expect(evaluate(parse('add 1 2'), bindNodes).toString()).toBe('λ s -> λ z -> s (s (s z))');
+  
+  expect(() => bindNodes.set('mul', parse('λ x y . x (add y) 0'))).not.toThrow();
+  expect(evaluate(parse('mul 2 (succ 2)'), bindNodes).toString()).toBe('λ s -> λ z -> s (s (s (s (s (s z)))))');
 });
