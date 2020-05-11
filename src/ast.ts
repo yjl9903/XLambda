@@ -50,7 +50,10 @@ export abstract class BaseASTNode {
    */
   abstract substitute(from: string, to: BaseASTNode): BaseASTNode;
 
-  abstract doNormOrderRedex({ done: boolean }, bound: Map<string, number>): BaseASTNode | undefined;
+  abstract doNormOrderRedex(
+    { done: boolean },
+    bound: Map<string, number>
+  ): BaseASTNode | undefined;
 
   abstract expand(
     bound: Map<string, number>,
@@ -297,7 +300,10 @@ export function expand(root: BaseASTNode, bindNodes: Map<string, BaseASTNode>) {
   return root.expand(new Map(), bindNodes);
 }
 
-export function evaluate(root: BaseASTNode, bindNodes?: Map<string, BaseASTNode>) {
+export function evaluate(
+  root: BaseASTNode,
+  bindNodes?: Map<string, BaseASTNode>
+) {
   const flag = { done: false };
   let ans = bindNodes ? expand(root, bindNodes) : root,
     depth = 0;

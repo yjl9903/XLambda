@@ -18,6 +18,7 @@ export enum Token {
 
 export enum Type {
   Expr = 'Expr',
+  Abstraction = 'Abstraction',
   AbstractionList = 'AbstractionList',
   Application = 'Application',
   Term = 'Term',
@@ -63,6 +64,35 @@ export const parser = new LRParser({
           },
         },
         {
+          rule: [Type.Abstraction],
+          reduce(abstraction: AbstractionASTNode) {
+            return abstraction;
+          },
+        },
+        {
+          rule: [Type.Application],
+          reduce(application) {
+            return application;
+          },
+        },
+        {
+          rule: [Type.Application, Type.Abstraction],
+          reduce(term: BaseASTNode, abstraction: AbstractionASTNode) {
+            return new ApplicationASTNode(term, abstraction);
+          },
+        },
+        {
+          rule: [Type.Term, Type.Abstraction],
+          reduce(term: BaseASTNode, abstraction: AbstractionASTNode) {
+            return new ApplicationASTNode(term, abstraction);
+          },
+        },
+      ],
+    },
+    {
+      left: Type.Abstraction,
+      right: [
+        {
           rule: [
             Token.Lambda,
             Token.Identifier,
@@ -83,12 +113,6 @@ export const parser = new LRParser({
               undefined
             );
             return root;
-          },
-        },
-        {
-          rule: [Type.Application],
-          reduce(application) {
-            return application;
           },
         },
       ],
