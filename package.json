@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@yjl9903/xparse": "^1.1.1",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "xlex": "^1.4.3"
   },
   "devDependencies": {
